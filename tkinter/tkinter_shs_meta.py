@@ -2,9 +2,9 @@
 import tkinter
 
 window = tkinter.Tk()
-window.geometry("1000x1000")
+window.geometry("700x700")
 
-canvas = tkinter.Canvas(window,width="500",height="500",relief="solid",bd=2)
+canvas = tkinter.Canvas(window,width="1000",height="1000",relief="solid",bd=2)
 
 
 meta = canvas.create_polygon(440,274,478,280,507,289,553,290,601,293,623,302,648,320,671,347,674,351,691,363,711,371,730,378,745,387,754,398,759,409,763,425,760,442,756
