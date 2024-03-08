@@ -1,12 +1,11 @@
 import tkinter as tk
-import random
 from tkinter import messagebox
-
 
 
 
 class OmokGame(tk.Canvas):
     WINNING_CONDITION = 5
+    COMPUTER_TRUN_CNT = 0
     
     def __init__(self, master=None, rows=19, columns=19, cell_size=40, board_color='#8B4513', player_color='black', computer_color='white', **kwargs):
         self.rows = rows
@@ -37,7 +36,6 @@ class OmokGame(tk.Canvas):
         game_menu.add_command(label="New Game", command=self.reset_game)
         game_menu.add_separator()
         game_menu.add_command(label="Exit", command=self.master.quit)
-
         
     #보드 판 생성 
     def draw_board(self):
@@ -102,7 +100,7 @@ class OmokGame(tk.Canvas):
                 self.computer_move()
                 
     def computer_move(self):
-        # 컴퓨터의 방어 동작과 공격 동작을 분리
+        # 컴퓨터의 방어 동작과 공격 동작
         self.computer_DefendAndAttack()
 
         # for i in self.board:
@@ -110,11 +108,12 @@ class OmokGame(tk.Canvas):
         self.turn = 'O'
         
     def computer_DefendAndAttack(self):
+        self.COMPUTER_TRUN_CNT += 1
+        
         for i in range(self.rows):
             for j in range(self.columns):
                 if self.board[i][j] == '':
                     # 공격 : (다음 턴에 컴퓨터가 5개가 완성된다면 공격)
-                    self.board[i][j] == 'X'
                     if self.check_win(i, j, 'X', self.WINNING_CONDITION):
                         self.board[i][j] = 'X'
                         self.draw_piece(i, j, self.computer_color)
@@ -127,81 +126,80 @@ class OmokGame(tk.Canvas):
             for j in range(self.columns):
                 if self.board[i][j] == '':
                     # 방어 : (다음 턴에 사용자가 5개 일때 방어)
-                    self.board[i][j] == 'O'
                     if self.check_win(i, j, 'O', self.WINNING_CONDITION):
                         self.board[i][j] = 'X'
                         self.draw_piece(i, j, self.computer_color)
                         return True
                     self.board[i][j] = ''
-                    
         
         for i in range(self.rows):
             for j in range(self.columns):
                 if self.board[i][j] == '':
                     # 공격 : (다음 턴에 컴퓨터가 4개가 완성된다면 공격)
-                    self.board[i][j] == 'X'
                     if self.check_win(i, j, 'X', self.WINNING_CONDITION-1):
                         self.board[i][j] = 'X'
                         self.draw_piece(i, j, self.computer_color)
                         return True
-                    self.board[i][j] = ''
+                    self.board[i][j] = ''        
             
         for i in range(self.rows):
             for j in range(self.columns):
                 if self.board[i][j] == '':
                     # 방어: 다음 턴에 사용자가 4개 일때 방어)
-                    self.board[i][j] = 'O'
-                    if self.check_win(i, j, 'O', self.WINNING_CONDITION - 1):
-                        self.board[i][j] = 'X'
-                        self.draw_piece(i, j, self.computer_color)
-                        return True
-                    self.board[i][j] = ''
+                        self.board[i][j] = 'O'
+                        if self.check_win(i, j, 'O', self.WINNING_CONDITION - 1):
+                            self.board[i][j] = 'X'
+                            self.draw_piece(i, j, self.computer_color)
+                            return True
+                        self.board[i][j] = ''
                     
-                    
-                    
+        for i in range(self.rows):
+                for j in range(self.columns):
+                    if self.board[i][j] == '':
+                        # 공격 : (다음 턴에 컴퓨터가 3개가 완성된다면 공격)
+                        if self.check_win(i, j, 'X', self.WINNING_CONDITION-2):
+                            self.board[i][j] = 'X'
+                            self.draw_piece(i, j, self.computer_color)
+                            return True
+                        self.board[i][j] = ''
+
+
         for i in range(self.rows):
             for j in range(self.columns):
                 if self.board[i][j] == '':
-                    # 방어: 사용자의 3개를 막기
+                    # 방어: 다음 턴에 사용자가 3개 일때 방어)
                     self.board[i][j] = 'O'
                     if self.check_win(i, j, 'O', self.WINNING_CONDITION - 2):
-                        if self.check_user_threat(i,j,'O',self.WINNING_CONDITION - 2): #한쪽이 막혀 있다면 공격
-                            
-                            for x in range(self.rows):
-                                for z in range(self.columns):
-                                        # 공격 : (다음 턴에 컴퓨터가 3개가 완성된다면 공격)
-                                        self.board[x][z] == 'X'
-                                        if self.check_win(x, z, 'X', self.WINNING_CONDITION-2):
-                                            self.board[x][z] = 'X'
-                                            self.draw_piece(x, z, self.computer_color)
-                                            return True
-                            
-                            for x in range(self.rows):
-                                for z in range(self.columns):
-                                        # 공격 : (다음 턴에 컴퓨터가 2개가 완성된다면 공격)
-                                        self.board[x][z] == 'X'
-                                        if self.check_win(x, z, 'X', self.WINNING_CONDITION-3):
-                                            self.board[x][z] = 'X'
-                                            self.draw_piece(x, z, self.computer_color)
-                                            return True
-                                        
-                            else:
-                                self.board[i][j] = 'X'
-                                self.draw_piece(i, j, self.computer_color)
-                                return True
-                    self.board[i][j] = ''
-                    
-                    
-        for i in range(self.rows):
-            for j in range(self.columns):
-                if self.board[i][j] == '':
-                    # 방어: 사용자의 2개를 막기
-                    self.board[i][j] = 'O'
-                    if self.check_win(i, j, 'O', 2):
                         self.board[i][j] = 'X'
                         self.draw_piece(i, j, self.computer_color)
                         return True
                     self.board[i][j] = ''
+                    
+                    
+        if self.COMPUTER_TRUN_CNT == 1 or self.COMPUTER_TRUN_CNT == 2:
+            for i in range(self.rows):
+                for j in range(self.columns):
+                    if self.board[i][j] == '':
+                        # 방어: 사용자의 2개를 막기
+                        self.board[i][j] = 'O'
+                        if self.check_win(i, j, 'O', 2):
+                            self.board[i][j] = 'X'
+                            self.draw_piece(i, j, self.computer_color)
+                            return True
+                        self.board[i][j] = ''
+                        
+                        
+        for i in range(self.rows):
+            for j in range(self.columns):
+                if self.board[i][j] == '':
+                    # 공격 : (다음 턴에 컴퓨터가 2개가 완성된다면 공격)
+                    self.board[i][j] == 'X'
+                    if self.check_win(i, j, 'X', self.WINNING_CONDITION-3):
+                        self.board[i][j] = 'X'
+                        self.draw_piece(i, j, self.computer_color)
+                        return True
+                    self.board[i][j] = ''
+                    
             
     # 바둑 돌 생성
     def draw_piece(self, row, col, color):
@@ -220,7 +218,6 @@ class OmokGame(tk.Canvas):
                 c = col + i * dc
                 if 0 <= r < self.rows and 0 <= c < self.columns and self.board[r][c] == player:
                     count += 1
-                    print("결과1 :",count)
                 else:
                     break
 
@@ -229,7 +226,6 @@ class OmokGame(tk.Canvas):
                 c = col - i * dc
                 if 0 <= r < self.rows and 0 <= c < self.columns and self.board[r][c] == player:
                     count += 1
-                    print("결과2 :",count)
                 else:
                     break
             
@@ -237,54 +233,14 @@ class OmokGame(tk.Canvas):
                 return True
             
         return False
-    
-    def check_user_threat(self, row, col, player, count_needed):
-        # 승리 여부 확인하는 메서드
-        directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
 
-        for dr, dc in directions:
-            count = 1
-            open_ends = 0  # 사용자 돌 사이의 열린 공간 개수
-            blocked_ends = 0  # 사용자 돌 사이의 막힌 공간 개수
-
-            for i in range(1, count_needed):
-                r = row + i * dr
-                c = col + i * dc
-
-                if 0 <= r < self.rows and 0 <= c < self.columns:
-                    if self.board[r][c] == player:
-                        count += 1
-                    elif self.board[r][c] == '':
-                        open_ends += 1
-                    else:
-                        blocked_ends += 1
-                else:
-                    blocked_ends += 1
-
-            for i in range(1, count_needed):
-                r = row - i * dr
-                c = col - i * dc
-
-                if 0 <= r < self.rows and 0 <= c < self.columns:
-                    if self.board[r][c] == player:
-                        count += 1
-                    elif self.board[r][c] == '':
-                        open_ends += 1
-                    else:
-                        blocked_ends += 1
-                else:
-                    blocked_ends += 1
-
-            if count == count_needed - 1 and open_ends == 1 and blocked_ends == 1:
-                return True
-
-        return False
 
     def reset_game(self):
         self.delete('all')
         self.board = [['' for _ in range(self.columns)] for _ in range(self.rows)]
         self.draw_board()
         self.turn = 'O'
+        self.COMPUTER_TRUN_CNT = 0
         
     def end_game_message(self, winner):
         if winner == 'O':
@@ -296,8 +252,6 @@ class OmokGame(tk.Canvas):
 
         messagebox.showinfo("Game Over", message)
         self.reset_game()
-        
-
 
 if __name__ == "__main__":
     root = tk.Tk()
