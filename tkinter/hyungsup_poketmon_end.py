@@ -3,6 +3,37 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 import random
 import os
+import hashlib
+import json
+from time import time
+
+class Block:
+    def __init__(self, index, previous_hash, moves, player_stone_color, computer_stone_color, timestamp=None):
+        self.index = index
+        self.previous_hash = previous_hash
+        self.moves = moves
+        self.player_stone_color = player_stone_color
+        self.computer_stone_color = computer_stone_color 
+        self.timestamp = timestamp or time()
+
+    def compute_hash(self):
+        block_string = json.dumps(self.__dict__, sort_keys=True)
+        return hashlib.sha256(block_string.encode()).hexdigest()
+
+class Blockchain:
+    def __init__(self):
+        self.chain = []
+        self.create_genesis_block()
+
+    def create_genesis_block(self):
+        genesis_block = Block(0, "0", [], "", "")
+        self.chain.append(genesis_block)
+
+    def add_block(self, moves, player_stone_color, computer_stone_color):
+        previous_block = self.chain[-1]
+        new_block = Block(len(self.chain), previous_block.compute_hash(), moves, player_stone_color, computer_stone_color)
+        self.chain.append(new_block)
+        print(f"Block added: {new_block.__dict__}")
 
 class OmokGame(tk.Canvas):
     WINNING_CONDITION = 5
@@ -25,13 +56,13 @@ class OmokGame(tk.Canvas):
         self.turn = 'O'
         self.computer_dropped_stones = 0
         
-        self.image_dir = "stone_images"
-        # 돌 이미지들의 파일명 리스트
+        self.image_dir = "C:\\PY_study\\stone_images"
         self.stone_images = [filename for filename in os.listdir(self.image_dir) if filename.endswith(".png")]
-        # 플레이어와 컴퓨터 돌 이미지
         self.player_stone_imgs = [ImageTk.PhotoImage(Image.open(os.path.join(self.image_dir, img))) for img in self.stone_images if img.startswith('black')]
         self.computer_stone_imgs = [ImageTk.PhotoImage(Image.open(os.path.join(self.image_dir, img))) for img in self.stone_images if img.startswith('white')]
-                
+        
+        self.blockchain = Blockchain()
+        
         super().__init__(master, width=self.width, height=self.height, **kwargs)
         self.draw_board()
         self.bind('<Button-1>', self.click_handler)
@@ -55,45 +86,20 @@ class OmokGame(tk.Canvas):
             self.game_mode = 1
             self.reset_game()
         
-    #보드 판 생성 
     def draw_board(self):
         self.create_rectangle(0,0,900,900, outline='', fill=self.board_color)
-        #세로
+        for i in range(13):
+                    self.create_line(30 + (i+1) * 60, 30, 30 + (i+1) * 60, 870, fill='black', width=2)
+                    self.create_line(30, 30 + (i+1) * 60, 870, 30 + (i+1) * 60, fill='black', width=2)
         self.create_line(30, 29, 30, 871, fill='black', width=4)
-        self.create_line(90, 30, 90, 870, fill='black', width=2)
-        self.create_line(150, 30, 150, 870, fill='black', width=2)
-        self.create_line(210, 30, 210, 870, fill='black', width=2)
-        self.create_line(270, 30, 270, 870, fill='black', width=2)
-        self.create_line(330, 30, 330, 870, fill='black', width=2)
-        self.create_line(390, 30, 390, 870, fill='black', width=2)
         self.create_line(450, 30, 450, 870, fill='black', width=3)
-        self.create_line(510, 30, 510, 870, fill='black', width=2)
-        self.create_line(570, 30, 570, 870, fill='black', width=2)
-        self.create_line(630, 30, 630, 870, fill='black', width=2)
-        self.create_line(690, 30, 690, 870, fill='black', width=2)
-        self.create_line(750, 30, 750, 870, fill='black', width=2)
-        self.create_line(810, 30, 810, 870, fill='black', width=2)
         self.create_line(870, 29, 870, 871, fill='black', width=4)
-        #가로
         self.create_line(29, 30, 871, 30, fill='black', width=4)
-        self.create_line(30, 90, 870, 90, fill='black', width=2)
-        self.create_line(30, 150, 870, 150, fill='black', width=2)
-        self.create_line(30, 210, 870, 210, fill='black', width=2)
-        self.create_line(30, 270, 870, 270, fill='black', width=2)
-        self.create_line(30, 330, 870, 330, fill='black', width=2)
-        self.create_line(30, 390, 870, 390, fill='black', width=2)
         self.create_line(30, 450, 870, 450, fill='black', width=3)
-        self.create_line(30, 510, 870, 510, fill='black', width=2)
-        self.create_line(30, 570, 870, 570, fill='black', width=2)
-        self.create_line(30, 630, 870, 630, fill='black', width=2)
-        self.create_line(30, 690, 870, 690, fill='black', width=2)
-        self.create_line(30, 750, 870, 750, fill='black', width=2)
-        self.create_line(30, 810, 870, 810, fill='black', width=2)
         self.create_line(29, 870, 871, 870, fill='black', width=4)
 
     def click_handler(self, event):
         if self.turn == 'O':
-            # 클릭한 곳의 가까운 행과 열의 인덱스를 구한다.
             col = event.x // self.cell_size
             row = event.y // self.cell_size
 
@@ -102,21 +108,17 @@ class OmokGame(tk.Canvas):
                 self.board[row][col] = 'O'
 
                 if self.check_win(row, col, 'O', self.WINNING_CONDITION):
-                    print("Player wins!")
-                    # 승자 메시지 표시
+                    print("플레이어 승리!")
                     self.end_game_message("O")
-                    self.reset_game()
                     return
                 
                 self.computer_move()
                 
     def computer_move(self):
-        # 컴퓨터의 방어 동작과 공격 동작
+        self.COMPUTER_TRUN_CNT += 1
         self.computer_DefendAndAttack()
-
-        # for i in self.board:
-        #     print(i)
-        # self.turn = 'O'
+        moves = self.get_moves()
+        self.blockchain.add_block(moves, self.player_color, self.computer_color)
         
     def computer_DefendAndAttack(self):
         self.COMPUTER_TRUN_CNT += 1
@@ -124,19 +126,16 @@ class OmokGame(tk.Canvas):
         for i in range(self.rows):
             for j in range(self.columns):
                 if self.board[i][j] == '':
-                    # 공격 : (다음 턴에 컴퓨터가 5개가 완성된다면 공격)
                     if self.check_win(i, j, 'X', self.WINNING_CONDITION):
                         self.board[i][j] = 'X'
                         self.draw_piece(i, j, self.computer_color)
                         print("컴퓨터 승리!")
-                        # 승자 메시지 표시
                         self.end_game_message("X")
-                        self.reset_game()
+                        return
         
         for i in range(self.rows):
             for j in range(self.columns):
                 if self.board[i][j] == '':
-                    # 방어 : (다음 턴에 사용자가 5개 일때 방어)
                     if self.check_win(i, j, 'O', self.WINNING_CONDITION):
                         self.board[i][j] = 'X'
                         self.draw_piece(i, j, self.computer_color)
@@ -146,7 +145,6 @@ class OmokGame(tk.Canvas):
         for i in range(self.rows):
             for j in range(self.columns):
                 if self.board[i][j] == '':
-                    # 공격 : (다음 턴에 컴퓨터가 4개가 완성된다면 공격)
                     if self.check_win(i, j, 'X', self.WINNING_CONDITION-1):
                         self.board[i][j] = 'X'
                         self.draw_piece(i, j, self.computer_color)
@@ -156,18 +154,16 @@ class OmokGame(tk.Canvas):
         for i in range(self.rows):
             for j in range(self.columns):
                 if self.board[i][j] == '':
-                    # 방어: 다음 턴에 사용자가 4개 일때 방어)
-                        self.board[i][j] = 'O'
-                        if self.check_win(i, j, 'O', self.WINNING_CONDITION - 1):
-                            self.board[i][j] = 'X'
-                            self.draw_piece(i, j, self.computer_color)
-                            return True
-                        self.board[i][j] = ''
+                    self.board[i][j] = 'O'
+                    if self.check_win(i, j, 'O', self.WINNING_CONDITION - 1):
+                        self.board[i][j] = 'X'
+                        self.draw_piece(i, j, self.computer_color)
+                        return True
+                    self.board[i][j] = ''
                     
         for i in range(self.rows):
                 for j in range(self.columns):
                     if self.board[i][j] == '':
-                        # 공격 : (다음 턴에 컴퓨터가 3개가 완성된다면 공격)
                         if self.check_win(i, j, 'X', self.WINNING_CONDITION-2):
                             self.board[i][j] = 'X'
                             self.draw_piece(i, j, self.computer_color)
@@ -177,7 +173,6 @@ class OmokGame(tk.Canvas):
         for i in range(self.rows):
             for j in range(self.columns):
                 if self.board[i][j] == '':
-                    # 방어: 다음 턴에 사용자가 3개 일때 방어)
                     self.board[i][j] = 'O'
                     if self.check_win(i, j, 'O', self.WINNING_CONDITION - 2):
                         self.board[i][j] = 'X'
@@ -189,7 +184,6 @@ class OmokGame(tk.Canvas):
             for i in range(self.rows):
                 for j in range(self.columns):
                     if self.board[i][j] == '':
-                        # 방어: 사용자의 2개를 막기
                         self.board[i][j] = 'O'
                         if self.check_win(i, j, 'O', 2):
                             self.board[i][j] = 'X'
@@ -200,15 +194,13 @@ class OmokGame(tk.Canvas):
         for i in range(self.rows):
             for j in range(self.columns):
                 if self.board[i][j] == '':
-                    # 공격 : (다음 턴에 컴퓨터가 2개가 완성된다면 공격)
-                    self.board[i][j] == 'X'
+                    self.board[i][j] = 'X'
                     if self.check_win(i, j, 'X', self.WINNING_CONDITION-3):
                         self.board[i][j] = 'X'
                         self.draw_piece(i, j, self.computer_color)
                         return True
                     self.board[i][j] = ''
             
-    # 바둑 돌 생성
     def draw_piece(self, row, col, color):
         if self.game_mode == 1:
             x = col * self.cell_size + self.cell_size // 2
@@ -250,6 +242,14 @@ class OmokGame(tk.Canvas):
                 return True
             
         return False
+    
+    def get_moves(self):
+        moves = []
+        for i in range(self.rows):
+            for j in range(self.columns):
+                if self.board[i][j] != '':
+                    moves.append((i, j))
+        return moves
 
     def reset_game(self):
         self.delete('all')
@@ -279,11 +279,10 @@ if __name__ == "__main__":
     omok_game.pack()
     omok_game.place(relx=0.5, rely=0.5, anchor="center")
     
-        # 화면 중앙에 창 배치
     window_width = root.winfo_reqwidth()
     window_height = root.winfo_reqheight()
     position_right = int(root.winfo_screenwidth() / 4 - window_width / 4)
-    position_down = int(root.winfo_screenheight() / 10 - window_height / 10)
+    position_down = int(root.winfo_screenheight() / 12 - window_height / 4)
     root.geometry(f"+{position_right}+{position_down}")
 
     root.mainloop()
