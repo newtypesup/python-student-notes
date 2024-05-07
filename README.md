@@ -1,1 +1,1 @@
-Python 연습
+Python 학습
